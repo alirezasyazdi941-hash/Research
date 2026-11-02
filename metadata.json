@@ -1,0 +1,6 @@
+{
+  "name": "Ali English — Private AI Language Academy",
+  "description": "High-end, deeply personalized English learning & intelligence system for Persian speakers specializing in AI, Computer Engineering, and Academic Research.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,171 @@
+<div class="min-h-screen bg-[#06080d] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+  <!-- Offline Indicator Banner (if browser loses network) -->
+  @if (!isOnline()) {
+    <div class="bg-amber-950/90 border-b border-amber-600/50 text-amber-200 text-xs font-mono-tech px-4 py-1.5 flex items-center justify-between z-50">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+        <span>OFFLINE MODE ACTIVE: All exercises, SM-2 flashcards, and local audio function independently.</span>
+      </div>
+      <span class="text-[10px] text-amber-300">INDEXEDDB SYNCED</span>
+    </div>
+  }
+
+  <!-- Master Top Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-[#060a12]/95 backdrop-blur-md border-b border-[#1e293b] px-4 py-2.5 flex items-center justify-between">
+    <!-- Left: Drawer Toggle & Brand Crest -->
+    <div class="flex items-center gap-3">
+      <button
+        (click)="toggleSidebar()"
+        class="lg:hidden p-1.5 rounded hover:bg-slate-800 text-slate-300 hover:text-cyan-400 transition"
+        title="Toggle Menu"
+      >
+        <span class="mat-icon text-xl">menu</span>
+      </button>
+
+      <a routerLink="/command-center" class="flex items-center gap-3 group">
+        <!-- Obsidian Ice Brand Crest -->
+        <div class="w-8 h-8 rounded bg-gradient-to-br from-cyan-500 to-sky-700 flex items-center justify-center text-slate-950 font-black text-xs font-mono-tech shadow-[0_0_12px_rgba(6,182,212,0.4)] group-hover:shadow-[0_0_20px_rgba(6,182,212,0.7)] transition-all">
+          AE
+        </div>
+        <div>
+          <div class="font-black text-sm tracking-tight text-white flex items-center gap-2">
+            <span>ALI ENGLISH</span>
+            <span class="text-[10px] font-mono-tech px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-bold uppercase">
+              ACADEMY
+            </span>
+          </div>
+          <div class="text-[10px] font-mono-tech text-slate-400 -mt-0.5">
+            PRIVATE LANGUAGE & INTELLIGENCE SYSTEM
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Center/Right: Quick Actions & PWA Install -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Quick Level Badge -->
+      <a
+        routerLink="/profile"
+        class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0b1220] border border-cyan-900/60 text-xs font-mono-tech hover:border-cyan-500 transition"
+        title="Current Certified Level"
+      >
+        <span class="text-slate-400 text-[10px]">CEFR:</span>
+        <span class="text-cyan-300 font-bold">{{ storage.profile().overallCefr }}</span>
+      </a>
+
+      <!-- TTS Speed Selector -->
+      <div class="hidden md:flex items-center gap-1 bg-[#070d18] border border-slate-800 rounded p-0.5 font-mono-tech text-[10px]">
+        <span class="text-slate-500 px-1.5">AUDIO:</span>
+        @for (r of [0.75, 1.0, 1.25]; track r) {
+          <button
+            (click)="speech.setRate(r)"
+            [class.bg-cyan-500]="speech.speechRate() === r"
+            [class.text-slate-950]="speech.speechRate() === r"
+            [class.font-bold]="speech.speechRate() === r"
+            [class.text-slate-300]="speech.speechRate() !== r"
+            class="px-1.5 py-0.5 rounded transition"
+          >
+            {{ r }}x
+          </button>
+        }
+      </div>
+
+      <!-- In-App PWA Install Component -->
+      <app-pwa-install></app-pwa-install>
+
+      <!-- Profile Avatar Button -->
+      <a
+        routerLink="/profile"
+        class="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 hover:border-cyan-400 flex items-center justify-center text-slate-300 text-xs font-bold transition"
+        title="Open Profile Settings"
+      >
+        <span class="mat-icon text-sm">person</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout Container: Sidebar + Main Content -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Sidebar Navigation Drawer -->
+    <aside
+      class="fixed inset-y-0 left-0 z-40 w-72 bg-[#050810] border-r border-[#1e293b] flex flex-col transition-transform duration-300 ease-in-out lg:static lg:translate-x-0"
+      [class.translate-x-0]="isSidebarOpen()"
+      [class.-translate-x-full]="!isSidebarOpen()"
+    >
+      <!-- Mobile Close header -->
+      <div class="lg:hidden flex items-center justify-between p-4 border-b border-slate-800">
+        <span class="text-xs font-mono-tech font-bold text-cyan-400">NAVIGATION MENU</span>
+        <button (click)="closeSidebar()" class="text-slate-400 hover:text-white">
+          <span class="mat-icon text-lg">close</span>
+        </button>
+      </div>
+
+      <!-- Navigation Scrollable List -->
+      <div class="flex-1 overflow-y-auto p-3 space-y-5">
+        @for (sec of navSections; track sec.title) {
+          <div class="space-y-1">
+            <div class="px-3 py-1 flex items-center justify-between text-[10px] font-mono-tech text-slate-500 uppercase tracking-wider">
+              <span>{{ sec.title }}</span>
+              <span class="font-persian text-[9px] text-slate-600">{{ sec.persianTitle }}</span>
+            </div>
+
+            <div class="space-y-0.5">
+              @for (item of sec.items; track item.id) {
+                <a
+                  [routerLink]="item.route"
+                  routerLinkActive="bg-cyan-950/80 text-cyan-200 border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.15)] font-semibold"
+                  [routerLinkActiveOptions]="{ exact: item.route === '/command-center' }"
+                  (click)="closeSidebar()"
+                  class="flex items-center justify-between px-3 py-2 rounded border border-transparent text-slate-400 hover:text-slate-100 hover:bg-[#0a1120] transition group text-xs font-mono-tech"
+                >
+                  <div class="flex items-center gap-2.5">
+                    <span class="mat-icon text-base text-slate-500 group-hover:text-cyan-400 transition-colors">
+                      {{ item.icon }}
+                    </span>
+                    <div class="flex flex-col text-left">
+                      <span class="leading-tight">{{ item.label }}</span>
+                      <span class="text-[10px] font-persian text-slate-500 group-hover:text-slate-400 leading-tight">
+                        {{ item.persianLabel }}
+                      </span>
+                    </div>
+                  </div>
+
+                  @if (item.badge && item.badge()) {
+                    <span class="px-1.5 py-0.2 rounded bg-rose-950 border border-rose-800 text-rose-300 text-[10px] font-bold">
+                      {{ item.badge!() }}
+                    </span>
+                  }
+                </a>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Sidebar Footer Grounding Info -->
+      <div class="p-3 border-t border-slate-900 bg-[#03050a] text-[10px] font-mono-tech text-slate-500 space-y-1">
+        <div class="flex items-center justify-between">
+          <span>ALI ENGLISH PRIVATE SYSTEM</span>
+          <span class="text-cyan-400">v2.0</span>
+        </div>
+        <div class="truncate text-slate-600 font-persian">
+          منبع آموزشی: راه علیرضا
+        </div>
+      </div>
+    </aside>
+
+    @if (isSidebarOpen()) {
+      <button
+        type="button"
+        aria-label="Close navigation drawer"
+        (click)="closeSidebar()"
+        class="fixed inset-0 z-30 bg-black/70 backdrop-blur-xs lg:hidden w-full h-full border-none cursor-pointer"
+      ></button>
+    }
+
+    <!-- Main Router Viewport -->
+    <main class="flex-1 overflow-y-auto bg-[#06080d] p-4 sm:p-6 lg:p-8">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
